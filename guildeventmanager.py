@@ -1,19 +1,19 @@
-from abc import abstractmethod
+import random
 import asyncio
 from enum import Enum
+from abc import abstractmethod
 from dataclasses import dataclass
-import random
 
 import discord
 
 
 class EventTypeEnum(Enum):
-        join = 1
-        ret = 2
-        leave = 3
-        ban = 4
-        unban = 5
-        boost = 6
+    join = 1
+    ret = 2
+    leave = 3
+    ban = 4
+    unban = 5
+    boost = 6
 
 
 @dataclass
