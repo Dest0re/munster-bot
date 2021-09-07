@@ -8,6 +8,10 @@ import discord
 
 
 class EventTypeEnum(Enum):
+    pass
+
+
+class GuildEventTypeEnum(EventTypeEnum):
     join = 1
     ret = 2
     leave = 3
@@ -15,6 +19,9 @@ class EventTypeEnum(Enum):
     unban = 5
     boost = 6
 
+class SuicideEventTypeEnum(EventTypeEnum):
+        suicide = 10
+        failed_suicide = 11
 
 @dataclass
 class EventType:
@@ -56,10 +63,24 @@ class GuildEventManager:
         pass
 
 
-class EmbedGuildEventManager(GuildEventManager):
+class SuicideEventManager:
+    @abstractmethod
+    async def send_suicide_message(self, member: discord.Member):
+        pass
+
+    @abstractmethod
+    async def send_failed_suicide_message(self, member: discord.Member):
+        pass
+
+
+class BybyrskyEventManager(GuildEventManager, SuicideEventManager):
+    pass
+
+
+class BybyrskyEmbedGuildEventManager(BybyrskyEventManager):
     event_types = {
-        EventTypeEnum.join: EventType(
-            type=EventTypeEnum.join,
+        GuildEventTypeEnum.join: EventType(
+            type=GuildEventTypeEnum.join,
             color=0x5CC67C, 
             title_text='присоединился к серверу', 
             description_text=['Здоровеньки булы!', 'Будь как дома.', 'Прикольный дискриминатор.'],
@@ -67,8 +88,8 @@ class EmbedGuildEventManager(GuildEventManager):
             button_emoji='👋', 
             reaction_message='{a} поприветствовал {m}. \nПривет-привет! 👋'
         ),
-        EventTypeEnum.ret: EventType(
-            type=EventTypeEnum.ret,
+        GuildEventTypeEnum.ret: EventType(
+            type=GuildEventTypeEnum.ret,
             color=0x78A0C0, 
             title_text='вернулся на сервер', 
             description_text=['Добро пожаловать. Снова.', 'Кого я вижу!', 'И где ты только был?..'],
@@ -76,8 +97,8 @@ class EmbedGuildEventManager(GuildEventManager):
             button_emoji='👋', 
             reaction_message='{a} рад, что {m} снова с нами. \nПривет-привет! 👋'
         ),
-        EventTypeEnum.leave: EventType(
-            type=EventTypeEnum.leave,
+        GuildEventTypeEnum.leave: EventType(
+            type=GuildEventTypeEnum.leave,
             color=0xFFE888, 
             title_text='покинул сервер', 
             description_text=['Будем скучать.', 'Интересно, чего это он?', 'Это его личный выбор.'],
@@ -85,8 +106,8 @@ class EmbedGuildEventManager(GuildEventManager):
             button_emoji='🤨', 
             reaction_message='{a} озадачен уходом {m}. \nЧто ж, будем надеяться, он вернётся!'
         ),
-        EventTypeEnum.ban: EventType(
-            type=EventTypeEnum.ban,
+        GuildEventTypeEnum.ban: EventType(
+            type=GuildEventTypeEnum.ban,
             color=0xFF7676, 
             title_text='был забанен', 
             description_text=['Вероятно, за дело.', 'Надеюсь, не навсегда.', 'Правила нужно соблюдать.'],
@@ -94,8 +115,8 @@ class EmbedGuildEventManager(GuildEventManager):
             button_emoji='🇫', 
             reaction_message='{a} отдаёт долг уважения забаненному {m}. \nPress :regional_indicator_f:!'
         ),
-        EventTypeEnum.unban: EventType(
-            type=EventTypeEnum.unban,
+        GuildEventTypeEnum.unban: EventType(
+            type=GuildEventTypeEnum.unban,
             color=0xF4BC1E,
             title_text='был разбанен',
             description_text=['Наконец-то!', 'Я всегда знал, что это должно случиться.', 'Надеюсь, такого больше не повторится'],
@@ -103,14 +124,32 @@ class EmbedGuildEventManager(GuildEventManager):
             button_emoji='🥳',
             reaction_message='{a} поздравляет {m} с разбаном. \nДобро пожаловать домой!'
         ),
-        EventTypeEnum.boost: EventType(
-            type=EventTypeEnum.boost,
+        GuildEventTypeEnum.boost: EventType(
+            type=GuildEventTypeEnum.boost,
             color=0xC49FFF, 
             title_text='забустил сервер!', 
             description_text=['Дружно скажем "Спасибо"!', 'Бустов много не бывает.'],
             button_color=discord.ButtonStyle.blurple, 
             button_emoji='😍', 
             reaction_message='{a} считает, что забустивший сервер {m} - замечательный. \nИ с этим трудно спорить! Спасибо ему!'
+        ),
+        SuicideEventTypeEnum.suicide: EventType(
+            type=SuicideEventTypeEnum.suicide,
+            color=0xff4848, 
+            title_text='совершил самоубийство.', 
+            description_text=['Однако', 'Надеюсь, это было не больно.', 'Кажется, с ним мы больше не увидимся...'],
+            button_color=discord.ButtonStyle.red, 
+            button_emoji='😥', 
+            reaction_message='{a} грустит по поводу самоубийства {m}. \nЕго уже не вернуть!'
+        ),
+        SuicideEventTypeEnum.failed_suicide: EventType(
+            type=SuicideEventTypeEnum.failed_suicide,
+            color=0xffeecc, 
+            title_text='попытался совершить самоубийство', 
+            description_text=['но у него не вышло!', 'Попытка - не пытка...'],
+            button_color=discord.ButtonStyle.blurple, 
+            button_emoji='😰', 
+            reaction_message='{m} попытался совершить самоубийство, но не смог. \nА {a} уже успел напрячься!'
         ),
     }
 
@@ -174,19 +213,25 @@ class EmbedGuildEventManager(GuildEventManager):
         await message.edit(view=None)
 
     async def send_join_message(self, member: discord.Member):
-        await self._send_event_message(member, EventTypeEnum.join)
+        await self._send_event_message(member, GuildEventTypeEnum.join)
     
     async def send_return_message(self, member: discord.Member):
-        await self._send_event_message(member, EventTypeEnum.ret)
+        await self._send_event_message(member, GuildEventTypeEnum.ret)
 
     async def send_leave_message(self, member: discord.Member):
-        await self._send_event_message(member, EventTypeEnum.leave)
+        await self._send_event_message(member, GuildEventTypeEnum.leave)
     
     async def send_ban_message(self, member: discord.Member):
-        await self._send_event_message(member, EventTypeEnum.ban)
+        await self._send_event_message(member, GuildEventTypeEnum.ban)
 
     async def send_unban_message(self, member: discord.Member):
-        await self._send_event_message(member, EventTypeEnum.unban)
+        await self._send_event_message(member, GuildEventTypeEnum.unban)
     
     async def send_boost_message(self, member: discord.Member):
-        await self._send_event_message(member, EventTypeEnum.boost)
+        await self._send_event_message(member, GuildEventTypeEnum.boost)
+
+    async def send_suicide_message(self, member: discord.Member):
+        await self._send_event_message(member, SuicideEventTypeEnum.suicide)
+
+    async def send_failed_suicide_message(self, member: discord.Member):
+        await self._send_event_message(member, SuicideEventTypeEnum.failed_suicide)
