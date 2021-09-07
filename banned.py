@@ -2,15 +2,12 @@
 
 import asyncio
 import random
-import json
 import time
 import sqlite3
 import os
 
 import discord
-from discord import tasks
 from loguru import logger as log
-from loguru import logger
 
 from guildeventmanager import EmbedGuildEventManager, GuildEventManager
 
