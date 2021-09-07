@@ -142,7 +142,7 @@ class Client(discord.Client):
         self.member_role = self.guild.get_role(MEMBER_ROLE_ID)
         self.bot_role = self.guild.get_role(BOT_ROLE_ID)
 
-        self.event_manager = EmbedGuildEventManager(self.text_channel, self.notifications_channel)
+        self.event_manager = EmbedGuildEventManager(self.notifications_channel, self.text_channel)
 
         messages = []
         for row in self.cur.execute('select message_id from suggestion_messages'):
