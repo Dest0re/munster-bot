@@ -191,7 +191,7 @@ class Client(discord.Client):
                 # await self.send(member, 'on_remove')
                 await self.event_manager.send_leave_message(member)
             
-            self.cur.execute('select * from leaved_users')
+            self.cur.execute('select * from leaved_users where id=?', (member.id,))
             if not self.cur.fetchone():
                 t = (member.id, )
                 self.cur.execute('insert into leaved_users values (?)', t)
