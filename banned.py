@@ -93,15 +93,9 @@ class Client(discord.Client):
         self.cur = self.connection.cursor()
         #self.host_rooms = host_rooms.HostRooms(self, self.connection)
 
-        asyncio.get_event_loop().create_task(self.on_start())
+        #asyncio.get_event_loop().create_task(self.on_start())
 
         log.info('База данных подключена!')
-
-    
-    async def on_start(self):
-        await self.wait_until_ready()
-
-        self.event_manager = EmbedGuildEventManager(self.text_channel, self.notifications_channel)
 
 
     def get_strikes(self, author_id):
@@ -147,6 +141,8 @@ class Client(discord.Client):
         self.text_channel = self.get_channel(TEXT_CHANNEL_ID)
         self.member_role = self.guild.get_role(MEMBER_ROLE_ID)
         self.bot_role = self.guild.get_role(BOT_ROLE_ID)
+
+        self.event_manager = EmbedGuildEventManager(self.text_channel, self.notifications_channel)
 
         messages = []
         for row in self.cur.execute('select message_id from suggestion_messages'):
