@@ -211,7 +211,7 @@ class Client(discord.Client):
                 pass
 
             t = (member.id, )
-            is_user_leaved = self.cur.execute('select id from leaved_users where id=?', t).fetchone()
+            is_user_leaved = self.cur.execute('select id from leaved_users where id=?', (t,)).fetchone()
             if is_user_leaved:
                 # await self.send(member, 'on_return')
                 await self.event_manager.send_return_message(member)
