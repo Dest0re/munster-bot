@@ -9,7 +9,7 @@ import os
 import discord
 from loguru import logger as log
 
-from guildeventmanager import EmbedGuildEventManager, GuildEventManager
+from guildeventmanager import BybyrskyEmbedGuildEventManager, GuildEventManager
 
 
 DISCORD_BOT_TOKEN = os.getenv('TOKEN')
@@ -110,7 +110,7 @@ class Client(discord.Client):
         self.member_role = self.guild.get_role(MEMBER_ROLE_ID)
         self.bot_role = self.guild.get_role(BOT_ROLE_ID)
 
-        self.event_manager = EmbedGuildEventManager(self.notifications_channel, self.text_channel)
+        self.event_manager = BybyrskyEmbedGuildEventManager(self.notifications_channel, self.text_channel)
 
         messages = []
         for row in self.cur.execute('select message_id from suggestion_messages'):
