@@ -52,29 +52,6 @@ GUILD_ANNOTATION_MESSAGE = GUILD_ANNOTATION.format(invite=INVITE_CHANNEL_ID,
     suicide=SUICIDE_CHANNEL_ID)
 
 
-def get_phrases():
-    log.info('Получаю фразы...')
-    with open(FILE_PATH, encoding='utf-8') as f:
-        phrases_dict = {}
-        group = 0
-        first_line = True
-
-        for line in f.readlines():
-            if line == SEPARATOR + '\n':
-                group += 1
-                first_line = True
-            else:
-                if not line.startswith(COMMENT) and not line.isspace():
-                    if first_line:
-                        phrases_dict[GROUPS[group]] = []
-                        first_line = False
-
-                    phrases_dict[GROUPS[group]].append(
-                        line.replace('\\n', '\n'))
-
-        log.info('Фразы получены!')
-        return phrases_dict
-
 class Client(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,9 +68,6 @@ class Client(discord.Client):
 
         self.connection = sqlite3.connect('banned.db')
         self.cur = self.connection.cursor()
-        #self.host_rooms = host_rooms.HostRooms(self, self.connection)
-
-        #asyncio.get_event_loop().create_task(self.on_start())
 
         log.info('База данных подключена!')
 
@@ -123,12 +97,6 @@ class Client(discord.Client):
             if message in self._connection._messages:
                 self._connection._messages.remove(message)
 
-    async def send(self, user, message_type):
-        log.info(f'{user} | Событие: {message_type}, отправляю сообщение...')
-        phrase = random.choice(get_phrases()[message_type])
-        message = await self.notifications_channel.send(phrase.format(m=user.mention))
-        log.info('Отправлено.')
-
     async def on_ready(self):
         log.info('Инициализируюсь...')
         log.info(f'Авторизовался как {self.user.display_name}.')
@@ -151,31 +119,11 @@ class Client(discord.Client):
         self.add_messages_to_fetch_list(self.ban_message)
         self.add_messages_to_fetch_list(*messages)
 
-        """
-        counter = 0
-        for member in self.guild.members:
-            if self.member_role not in member.roles:
-                if not member.bot:
-                    counter += 1
-                    await member.add_roles(self.member_role, reason='Выдана роль пользователя')
-                    t = (member.id, )
-                    is_user_leaved = self.cur.execute('select id from leaved_users where id=?', t).fetchone()
-                    if is_user_leaved:
-                        await self.send(member, 'on_return')
-                    else:
-                        await self.send(member, 'on_join')
-
-        if counter > 0:
-            log.info(f'Выдана роль участника {counter} пользователям.')
-        """
-
-        #await self.host_rooms.on_ready()
         log.info('Инициализация завершена!')
 
     async def on_member_ban(self, guild, user):
         await self.wait_until_ready()
         if guild.id == GUILD_ID:
-            # await self.send(user, 'on_ban')
             asyncio.get_event_loop().create_task(self.event_manager.send_ban_message(user))
 
     async def on_member_unban(self, guild, user):
@@ -188,7 +136,6 @@ class Client(discord.Client):
         if member.guild.id == GUILD_ID:
             bans = await self.guild.bans()
             if not discord.utils.find(lambda e: e.user.id == member.id, bans):
-                # await self.send(member, 'on_remove')
                 asyncio.get_event_loop().create_task(self.event_manager.send_leave_message(member))
             
             self.cur.execute('select * from leaved_users where id=?', (member.id,))
@@ -203,20 +150,12 @@ class Client(discord.Client):
             if member.bot:
                 await member.add_roles(self.bot_role, reason='Это бот')
                 log.info(f'{member}: даю роль бота')
-            else:
-                """
-                if self.member_role not in member.roles:
-                    await member.add_roles(self.member_role, reason=f'{member}: выдана роль пользователя')
-                """
-                pass
 
             t = (member.id, )
             is_user_leaved = self.cur.execute('select id from leaved_users where id=?', t).fetchone()
             if is_user_leaved:
-                # await self.send(member, 'on_return')
                 asyncio.get_event_loop().create_task(self.event_manager.send_return_message(member))
             else:
-                # await self.send(member, 'on_join')
                 asyncio.get_event_loop().create_task(self.event_manager.send_join_message(member))
 
                 greeting_message = await self.text_channel.send(GREETING_MESSAGE.format(m=member.mention))
