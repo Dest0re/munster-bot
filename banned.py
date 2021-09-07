@@ -176,7 +176,7 @@ class Client(discord.Client):
         await self.wait_until_ready()
         if guild.id == GUILD_ID:
             # await self.send(user, 'on_ban')
-            await self.event_manager.send_ban_message(user)
+            asyncio.get_event_loop().create_task(self.event_manager.send_ban_message(user))
 
     async def on_member_unban(self, guild, user):
         await self.wait_until_ready()
@@ -189,7 +189,7 @@ class Client(discord.Client):
             bans = await self.guild.bans()
             if not discord.utils.find(lambda e: e.user.id == member.id, bans):
                 # await self.send(member, 'on_remove')
-                await self.event_manager.send_leave_message(member)
+                asyncio.get_event_loop().create_task(self.event_manager.send_leave_message(member))
             
             self.cur.execute('select * from leaved_users where id=?', (member.id,))
             if not self.cur.fetchone():
@@ -214,10 +214,10 @@ class Client(discord.Client):
             is_user_leaved = self.cur.execute('select id from leaved_users where id=?', t).fetchone()
             if is_user_leaved:
                 # await self.send(member, 'on_return')
-                await self.event_manager.send_return_message(member)
+                asyncio.get_event_loop().create_task(self.event_manager.send_return_message(member))
             else:
                 # await self.send(member, 'on_join')
-                await self.event_manager.send_join_message(member)
+                asyncio.get_event_loop().create_task(self.event_manager.send_join_message(member))
 
                 greeting_message = await self.text_channel.send(GREETING_MESSAGE.format(m=member.mention))
                 await greeting_message.add_reaction('📕')
@@ -232,7 +232,7 @@ class Client(discord.Client):
                     log.info('Новичок попросил помочь, отправил ему в лс сообщение.')
     
     async def on_nitro_boost(self, member):
-        await self.event_manager.send_boost_message(member)
+        asyncio.get_event_loop().create_task(self.event_manager.send_boost_message(member))
 
     async def on_reaction_add(self, reaction, user):
         await self.wait_until_ready()
