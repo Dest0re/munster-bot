@@ -115,8 +115,8 @@ class EmbedGuildEventManager(GuildEventManager):
     }
 
     def __init__(self, notifications_channel: discord.TextChannel, text_channel: discord.TextChannel):
-        self.notifications_channel = notifications_channel
-        self.text_channel = text_channel
+        self._notifications_channel = notifications_channel
+        self._text_channel = text_channel
 
     @classmethod
     def _generate_embed(cls, member: discord.Member, event_type: EventTypeEnum) -> discord.Embed:
@@ -150,7 +150,7 @@ class EmbedGuildEventManager(GuildEventManager):
         async def on_interaction(interaction: discord.Interaction):
             if interaction.user not in already_reacted:
                 already_reacted.append(interaction.user)
-                await self.text_channel.send(self._get_reaction_text(event_type, interaction.user, member))
+                await self._text_channel.send(self._get_reaction_text(event_type, interaction.user, member))
             await interaction.response.defer()
         return on_interaction
 
@@ -167,7 +167,7 @@ class EmbedGuildEventManager(GuildEventManager):
         embed = self._generate_embed(member, event_type)
         view = self._generate_view(event_type, member)
 
-        message = await self.notifications_channel.send(embed=embed, view=view)
+        message = await self._notifications_channel.send(embed=embed, view=view)
 
         await asyncio.sleep(60)
 
