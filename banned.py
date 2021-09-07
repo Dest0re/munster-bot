@@ -9,8 +9,7 @@ import os
 import discord
 from loguru import logger as log
 
-from guildeventmanager import BybyrskyEmbedGuildEventManager, GuildEventManager
-
+from guildeventmanager import BybyrskyEmbedGuildEventManager, BybyrskyEventManager
 
 DISCORD_BOT_TOKEN = os.getenv('TOKEN')
 FILE_PATH = './phrases'
@@ -64,7 +63,7 @@ class Client(discord.Client):
         self.member_role = None
         self.bot_role = None
 
-        self.event_manager: GuildEventManager = None
+        self.event_manager: BybyrskyEventManager = None
 
         self.connection = sqlite3.connect('banned.db')
         self.cur = self.connection.cursor()
@@ -180,11 +179,13 @@ class Client(discord.Client):
             await self.ban_message.clear_reactions()
             try:
                 await self.guild.ban(user, reason='Самовыпил.', delete_message_days=0)
-                await self.notifications_channel.send(f'{user.mention} предпочёл бан. Такова была его реакция: {str(reaction)}.')
+                asyncio.get_event_loop().create_task(self.event_manager.send_suicide_message(user))
+                #await self.notifications_channel.send(f'{user.mention} предпочёл бан. Такова была его реакция: {str(reaction)}.')
                 log.info('Желание было исполнено.')
             except discord.errors.Forbidden:
                 log.warning('Недостаточно прав для бана!')
-                await self.notifications_channel.send(f'{user.mention} попытался покончить с собой, но у него не вышло! \nhttps://www.youtube.com/watch?v=Yic_aU1cmQ4')
+                asyncio.get_event_loop().create_task(self.event_manager.send_failed_suicide_message(user))
+                # await self.notifications_channel.send(f'{user.mention} попытался покончить с собой, но у него не вышло! \nhttps://www.youtube.com/watch?v=Yic_aU1cmQ4')
         elif row := self.cur.execute('select author_id from suggestion_messages where message_id=?', (reaction.message.id, )).fetchone():
             if user != self.user:
                 if reaction.emoji in ('✔', '❌', '♻'):

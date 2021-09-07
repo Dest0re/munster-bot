@@ -146,7 +146,7 @@ class BybyrskyEmbedGuildEventManager(BybyrskyEventManager):
             type=SuicideEventTypeEnum.failed_suicide,
             color=0xffeecc, 
             title_text='попытался совершить самоубийство', 
-            description_text=['но у него не вышло!', 'Попытка - не пытка...'],
+            description_text=['но у него не вышло!', 'Попытка - не пытка...', 'https://youtu.be/Yic_aU1cmQ4'],
             button_color=discord.ButtonStyle.blurple, 
             button_emoji='😰', 
             reaction_message='{m} попытался совершить самоубийство, но не смог. \nА {a} уже успел напрячься!'
