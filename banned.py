@@ -8,8 +8,11 @@ import sqlite3
 import os
 
 import discord
+from discord import tasks
 from loguru import logger as log
 from loguru import logger
+
+from guildeventmanager import EmbedGuildEventManager, GuildEventManager
 
 
 DISCORD_BOT_TOKEN = os.getenv('TOKEN')
@@ -87,11 +90,22 @@ class Client(discord.Client):
         self.member_role = None
         self.bot_role = None
 
+        self.event_manager: GuildEventManager = None
+
         self.connection = sqlite3.connect('banned.db')
         self.cur = self.connection.cursor()
         #self.host_rooms = host_rooms.HostRooms(self, self.connection)
 
+        asyncio.get_event_loop().create_task(self.on_start())
+
         log.info('База данных подключена!')
+
+    
+    async def on_start(self):
+        await self.wait_until_ready()
+
+        self.event_manager = EmbedGuildEventManager(self.text_channel, self.notifications_channel)
+
 
     def get_strikes(self, author_id):
         t = (author_id, )
@@ -168,7 +182,8 @@ class Client(discord.Client):
     async def on_member_ban(self, guild, user):
         await self.wait_until_ready()
         if guild.id == GUILD_ID:
-            await self.send(user, 'on_ban')
+            # await self.send(user, 'on_ban')
+            await self.event_manager.send_ban_message(user)
 
     async def on_member_unban(self, guild, user):
         await self.wait_until_ready()
@@ -180,7 +195,8 @@ class Client(discord.Client):
         if member.guild.id == GUILD_ID:
             bans = await self.guild.bans()
             if not discord.utils.find(lambda e: e.user.id == member.id, bans):
-                await self.send(member, 'on_remove')
+                # await self.send(member, 'on_remove')
+                await self.event_manager.send_leave_message(member)
             
             self.cur.execute('select * from leaved_users')
             if not self.cur.fetchone():
@@ -204,9 +220,11 @@ class Client(discord.Client):
             t = (member.id, )
             is_user_leaved = self.cur.execute('select id from leaved_users where id=?', t).fetchone()
             if is_user_leaved:
-                await self.send(member, 'on_return')
+                # await self.send(member, 'on_return')
+                await self.event_manager.send_return_message(member)
             else:
-                await self.send(member, 'on_join')
+                # await self.send(member, 'on_join')
+                await self.event_manager.send_join_message(member)
 
                 greeting_message = await self.text_channel.send(GREETING_MESSAGE.format(m=member.mention))
                 await greeting_message.add_reaction('📕')
@@ -219,6 +237,9 @@ class Client(discord.Client):
                     await member.send(GUILD_ANNOTATION_MESSAGE)
                     await greeting_message.clear_reactions()
                     log.info('Новичок попросил помочь, отправил ему в лс сообщение.')
+    
+    async def on_nitro_boost(self, member):
+        await self.event_manager.send_boost_message(member)
 
     async def on_reaction_add(self, reaction, user):
         await self.wait_until_ready()
@@ -319,6 +340,10 @@ class Client(discord.Client):
                         self.add_messages_to_fetch_list(new_sugg_message)
 
                         await sugg_message.delete()
+
+    async def on_member_update(self, before, after):
+        if before.premium_since is None and after.premium_since is not None:
+            await self.on_nitro_boost(after)
 
     def __del__(self):
         self.connection.close()
