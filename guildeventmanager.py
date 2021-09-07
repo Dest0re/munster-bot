@@ -142,7 +142,7 @@ class EmbedGuildEventManager(GuildEventManager):
         )
 
     @classmethod
-    def _get_reaction_text(cls, event_type: EventTypeEnum, author: discord.Member, member: discord.Member):
+    def _get_reaction_text(cls, event_type: EventTypeEnum, author: discord.Member, member: discord.Member) -> str:
         return cls.event_types[event_type].reaction_message.format(a=author.display_name, m=member.display_name)
 
     def _on_interaction(self, event_type: EventTypeEnum, member: discord.Member):
