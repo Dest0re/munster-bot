@@ -6,8 +6,6 @@ import random
 
 import discord
 
-client = discord.Client()
-
 
 class EventTypeEnum(Enum):
         join = 1
@@ -192,19 +190,3 @@ class EmbedGuildEventManager(GuildEventManager):
     
     async def send_boost_message(self, member: discord.Member):
         await self._send_event_message(member, EventTypeEnum.boost)
-
-
-@client.event
-async def on_ready():
-    event_manager = GuildEventManager(client.get_channel(405307378138087424), client.get_channel(405307378138087424))
-    
-    asyncio.get_event_loop().create_task(event_manager.send_join_message(client.user))
-    asyncio.get_event_loop().create_task(event_manager.send_return_message(client.user))
-    asyncio.get_event_loop().create_task(event_manager.send_leave_message(client.user))
-    asyncio.get_event_loop().create_task(event_manager.send_ban_message(client.user))
-    asyncio.get_event_loop().create_task(event_manager.send_boost_message(client.user))
-    
-    print('done')
-
-
-client.run('NjI3OTgwMTI0OTY4NzE0MjQx.XZEiEQ.jRDnaUvVJ66eo_fHQEQ6mPIHikQ')
