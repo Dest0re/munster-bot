@@ -5,6 +5,7 @@ import random
 import time
 import sqlite3
 import os
+from typing import Type
 
 import discord
 from loguru import logger as log
@@ -50,6 +51,46 @@ GUILD_ANNOTATION_MESSAGE = GUILD_ANNOTATION.format(invite=INVITE_CHANNEL_ID,
     notifications=NOTIFICATIONS_CHANNEL_ID, suggestions=SUGGESTIONS_CHANNEL_ID,
     suicide=SUICIDE_CHANNEL_ID)
 
+class Suggestion:
+    def __init__(self, message_id: int, author_id: int, admin_response: str = ''):
+        self._message_id = message_id
+        self._author_id = author_id
+        self._admin_response = admin_response
+
+    @property
+    def message_id(self) -> int:
+        return self._message_id
+    
+    @property
+    def author_id(self) -> int:
+        return self._author_id
+
+    @property
+    def admin_response(self) -> str:
+        return self._admin_response
+
+    def _generate_embed(cls, message):
+        pass
+
+    async def respond(self, respond_message: str):
+        pass
+
+    @classmethod
+    async def create(cls):
+        pass
+
+    @classmethod
+    async def dispose(cls, suggestion):
+        pass
+
+    
+
+
+class SuggestionsManager:
+    def __init__(self, db_path: str):
+        self._connection = sqlite3.connect(db_path)
+        self._cursor = self._connection.cursor()
+
 
 class Client(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -81,7 +122,7 @@ class Client(discord.Client):
 
     def generate_embed(self, message):
         embed = discord.Embed(title="Новое предложение", description=message.content)
-        embed.set_author(name=str(message.author), icon_url=str(message.author.avatar_url))
+        embed.set_author(name=str(message.author), icon_url=str(message.author.avatar.url))
         embed.set_footer(text=time.ctime(time.time() -  60 * 60 * 2))
         embed.add_field(name='Штрафы', value=self.get_strikes(message.author.id), inline=False)
         return embed
